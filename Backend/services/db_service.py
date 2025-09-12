@@ -188,3 +188,5 @@ def update_email_classification(provider_message_id: str, category: str, confide
         }}
     )
     print(f"Updated email {provider_message_id} with category '{category}' and confidence {confidence}")
+
+    

@@ -47,7 +47,7 @@ Here is an example output:
 {{
   "category": "Work / Professional",
   "confidence": 0.92,
-  "reasoning": "The email discusses project updates and deadlines.",
+  "reasoning": "The email discusses project updates and deadlines, which are typical of professional work communications.",
   "summary": "The email provides updates on the current project status and upcoming deadlines."
 }}
 ```

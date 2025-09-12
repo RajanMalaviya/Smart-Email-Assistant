@@ -1,9 +1,13 @@
 import sys
+
+from bson import ObjectId
 from services.gmail_service import GmailService
 from utils.parser import clean_email_text
 from services.db_service import bulk_upsert_emails, get_all_emails
 from services.logger import get_logger
 from services.classifier import classify_unclassified_emails
+from services.responder import generate_response
+
 
 logger = get_logger(__name__)
 
@@ -32,7 +36,7 @@ def _print_table(rows):
         print(f"{from_text:<{col_from}} | {subject_text:<{col_subject}} | {snippet_text:<{col_snippet}}")
 
 # Fetch & Store Emails
-def fetch_and_store_emails(max_emails_to_fetch: int = 10):
+def fetch_and_store_emails(max_emails_to_fetch: int = 5):
     gmail = GmailService()
     logger.info(f"Fetching up to {max_emails_to_fetch} emails from Gmail...")
     gmail_emails = gmail.fetch_inbox_emails(max_results=max_emails_to_fetch)
@@ -65,12 +69,28 @@ if __name__ == "__main__":
     elif task == "classify":
         print("🔎 Running classifier mode...")
         classify_unclassified_emails()
+        
+    elif task == "respond":
+        print("✉️ Running responder mode...")  # will prompt for email ID
+        email_id = input("Enter the email ID to respond to: ").strip()
+        try:
+            generate_response(email_id)
+        except ValueError as ve:
+            print(f"Error: {ve}")
 
     elif task == "all":
         print("📥 Running fetch + classify mode...")
         fetch_and_store_emails(max_emails_to_fetch=10)
+        
         print("\n🚀 Starting email classifier...")
         classify_unclassified_emails()
+        
+        print("✉️ Running responder mode...")  # will prompt for email ID
+        email_id = input("Enter the email ID to respond to: ").strip()
+        try:
+            generate_response(email_id)
+        except ValueError as ve:
+            print(f"Error: {ve}")
 
     else:
         print(f"⚠️ Unknown task: {task}")
