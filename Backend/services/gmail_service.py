@@ -77,7 +77,8 @@ class GmailService:
                 "from": sender,
                 "subject": subject,
                 "snippet": snippet,
-                "labels": msg_data.get("labelIds", [])
+                "labels": msg_data.get("labelIds", []),
+                "date": msg_data.get("internalDate")
             })
 
         logger.info(f"Fetched {len(emails)} emails successfully")

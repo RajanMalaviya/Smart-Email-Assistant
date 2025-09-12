@@ -1,0 +1,83 @@
+# ========================
+# Python (Backend)
+# ========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pkl
+*.egg-info/
+.eggs/
+*.log
+
+# Virtual environment
+venv/
+.env/
+.env.local
+.venv/
+*.sqlite3
+
+# Byte-compiled / cache
+*.mypy_cache/
+*.pytest_cache/
+.coverage
+.pytest_cache/
+.pytype/
+
+# ========================
+# Node / React (Frontend)
+# ========================
+node_modules/
+build/
+dist/
+.cache/
+.next/
+*.log
+*.lock
+
+# React specific
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp.*
+.pnp.js
+.pnpm-debug.log*
+
+# ========================
+# Environment & Configs
+# ========================
+# Environment files (keep local only)
+.env
+.env.*
+!env.example
+
+# VSCode / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ========================
+# OS Generated Files
+# ========================
+.DS_Store
+Thumbs.db
+*.tmp
+
+# ========================
+# Docker
+# ========================
+/docker-data/
+*.pid
+
+# ========================
+# MongoDB Data (if local)
+# ========================
+/data/db/
+
+package.json
+package-lock.json
+app.log
+# Secrets
+Backend/services/token.json
+Backend/services/credentials.json

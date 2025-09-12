@@ -10,57 +10,18 @@ from pydantic import BaseModel, Field
 from services.logger import get_logger
 from config.settings import MONGO_URI as SETTINGS_MONGO_URI, MONGO_DB as SETTINGS_MONGO_DB, MONGO_COLLECTION as SETTINGS_MONGO_COLLECTION
 
-# ----------------------------
-# CONFIGURATION
-# ----------------------------
-# Use config.settings (loads .env) to support Atlas SRV URIs
 MONGO_URI = SETTINGS_MONGO_URI
 MONGO_DB = SETTINGS_MONGO_DB
 MONGO_COLLECTION = SETTINGS_MONGO_COLLECTION
 
-# ----------------------------
-# LOGGER SETUP (file only)
-# ----------------------------
-import logging
-if not os.path.exists("logs"):
-    os.makedirs("logs")
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
-    handlers=[logging.FileHandler("logs/app.log")]
-)
-logger = logging.getLogger(__name__)
-
-# ----------------------------
-# DATABASE CONNECTION
-# ----------------------------
-if not MONGO_URI:
-    logger.error("❌ MONGO_URI is not set. Provide your MongoDB Atlas connection string in .env")
-    raise ValueError("MONGO_URI environment variable is required")
-
-def _mask_uri(uri: str) -> str:
-    if "@" not in uri:
-        return uri
-    # Mask credentials between scheme and host
-    if uri.startswith("mongodb+srv://"):
-        return "mongodb+srv://***:***@" + uri.split("@", 1)[1]
-    if uri.startswith("mongodb://"):
-        return "mongodb://***:***@" + uri.split("@", 1)[1]
-    return uri
-
 try:
-    logger.info(f"Connecting to MongoDB at {_mask_uri(MONGO_URI)} (db='{MONGO_DB}', collection='{MONGO_COLLECTION}')")
     client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
     client.server_info()  # verify connection
     db = client[MONGO_DB]
     emails_collection = db[MONGO_COLLECTION]
-    logger.info("Connected to MongoDB successfully")
     print("Mongodb connected")
 except ServerSelectionTimeoutError as e:
-    logger.error(
-        "❌ Failed to connect to MongoDB. If using Atlas, verify: 1) correct username/password, 2) your IP is allowlisted, 3) cluster is running.",
-        exc_info=True,
-    )
+    print("Mongodb connection failed")
     raise e
 
 # Ensure indexes
@@ -72,11 +33,8 @@ emails_collection.create_index(
 emails_collection.create_index("date", name="date_idx")
 emails_collection.create_index("from", name="from_idx")
 emails_collection.create_index("labels", name="labels_idx")
-logger.info("MongoDB indexes ensured")
 
-# ----------------------------
 # EMAIL SCHEMA
-# ----------------------------
 class AttachmentModel(BaseModel):
     filename: str
     mimeType: str = None
@@ -107,13 +65,11 @@ class EmailModel(BaseModel):
     metadata: Dict[str, Any] = {}
 
     class Config:
-        allow_population_by_field_name = True
+        validate_by_name = True
         arbitrary_types_allowed = True
         json_encoders = {datetime.datetime: lambda v: v.isoformat()}
 
-# ----------------------------
 # HELPER FUNCTIONS
-# ----------------------------
 def _parse_date(value):
     if not value:
         return None
@@ -149,13 +105,18 @@ def _sanitize_email(raw: Dict[str, Any], provider: str) -> Dict[str, Any]:
     doc['date'] = parsed_date
     doc['fetched_at'] = datetime.datetime.utcnow()
     doc['processed'] = raw.get('processed', False)
-    doc['classifications'] = raw.get('classifications', {})
-    doc['metadata'] = raw.get('metadata', {})
+
+    # ❌ don’t force overwrite
+    if raw.get('classifications'):
+        doc['classifications'] = raw['classifications']
+
+    if raw.get('metadata'):
+        doc['metadata'] = raw['metadata']
+
     return doc
 
-# ----------------------------
+
 # CRUD OPERATIONS
-# ----------------------------
 def bulk_upsert_emails(raw_emails: List[Dict[str, Any]], provider: str = "gmail") -> Dict[str,int]:
     """Bulk upsert emails into MongoDB"""
     ops = []
@@ -163,26 +124,67 @@ def bulk_upsert_emails(raw_emails: List[Dict[str, Any]], provider: str = "gmail"
         doc = _sanitize_email(raw, provider)
         if not doc.get('provider_message_id'):
             continue
+
         filter_q = {"provider": doc['provider'], "provider_message_id": doc['provider_message_id']}
-        update = {"$set": doc, "$setOnInsert": {"created_at": datetime.datetime.utcnow()}}
+
+        update_doc = {k: v for k, v in doc.items() if k not in ["classifications", "metadata"]}
+        update = {
+            "$set": update_doc,
+            "$setOnInsert": {
+                "created_at": datetime.datetime.utcnow(),
+                "classifications": doc.get("classifications", {}),  # only set if new insert
+                "metadata": doc.get("metadata", {}),
+            }
+        }
+
         ops.append(UpdateOne(filter_q, update, upsert=True))
 
     if not ops:
-        logger.warning("No valid emails to upsert")
         return {"upserted_count": 0, "modified_count": 0}
 
     result = emails_collection.bulk_write(ops, ordered=False)
-    logger.info(f"Bulk upsert complete: Upserted {result.upserted_count}, Modified {result.modified_count}")
+    print(f"\n\nBulk upsert complete: Upserted {result.upserted_count}, Modified {result.modified_count}")
     return {"upserted_count": result.upserted_count, "modified_count": result.modified_count}
+
 
 def store_attachment_gridfs(filename: str, data_bytes: bytes, content_type: str = None) -> str:
     """Store attachment in GridFS and return storage_id"""
     fs = GridFS(db)
     grid_id = fs.put(data_bytes, filename=filename, contentType=content_type)
-    logger.debug(f"Stored attachment {filename} in GridFS with id {grid_id}")
+    print(f"Stored attachment {filename} in GridFS with id {grid_id}")
     return str(grid_id)
 
+# Get all emails
 def get_all_emails() -> List[Dict[str, Any]]:
     emails = list(emails_collection.find({}, {"_id": 0}))
-    logger.info(f"Retrieved {len(emails)} emails from MongoDB")
+    print(f"Retrieved {len(emails)} emails from MongoDB")
     return emails
+
+# Get emails that are not yet classified
+def get_unclassified_emails() -> List[Dict[str, Any]]:
+    query = {
+        "$or": [
+            {"classifications": {"$exists": False}},   # field missing
+            {"classifications": {}},                   # empty object
+            {"classifications.category": {"$exists": False}}  # no category yet
+        ]
+    }
+    emails = list(emails_collection.find(query, {"_id": 0}))
+    print(f"Retrieved {len(emails)} unclassified emails from MongoDB")
+    return emails
+
+# Update email with classification result
+def update_email_classification(provider_message_id: str, category: str, confidence: float, reasoning: str = "", summary: str = ""):
+    emails_collection.update_one(
+        {"provider_message_id": provider_message_id},
+        {"$set": {
+            "classifications": {
+                "category": category,
+                "confidence": confidence,
+                "reasoning": reasoning,
+                "summary": summary
+            },
+            "metadata.processed": True
+        }}
+    )
+    print(f"Updated email {provider_message_id} with category '{category}' and confidence {confidence}")
