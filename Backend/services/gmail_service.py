@@ -71,10 +71,12 @@ class GmailService:
             snippet = msg_data.get("snippet", "")
 
             emails.append({
+                "id": msg["id"],
                 "provider": "gmail",
                 "provider_message_id": msg["id"],
                 "thread_id": msg_data.get("threadId"),
                 "from": sender,
+                "to": "me",
                 "subject": subject,
                 "snippet": snippet,
                 "labels": msg_data.get("labelIds", []),

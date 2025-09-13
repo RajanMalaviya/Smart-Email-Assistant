@@ -8,3 +8,5 @@ pymongo[srv]
 pydantic==1.10.11
 dnspython
 langchain
+fastapi
+uvicorn

@@ -96,12 +96,83 @@ responder_chain = (
     | llm
 )
 
+# # Responder Agent
+# def generate_response(email_id: str):
+#     try:
+#         oid = ObjectId(email_id)
+#     except Exception:
+#         raise ValueError("Invalid ObjectId format")
+#     email_doc: Dict[str, Any] = emails_collection.find_one({"_id": oid})
+#     if not email_doc:
+#         raise ValueError("Email not found!")
+
+#     sender = email_doc.get("from", "")
+#     recipient = email_doc.get("to", [])[0] if email_doc.get("to") else "unknown@example.com"
+#     subject = "Re: " + (email_doc.get("subject") or "No Subject")
+#     body = email_doc.get("body_plain") or email_doc.get("snippet") or ""
+
+#     # Step 1: Generate draft
+#     draft = responder_chain.invoke({
+#         "sender": sender,
+#         "recipient": recipient,
+#         "subject": subject,
+#         "email_body": body
+#     }).content
+
+#     # Step 2: Human-in-the-loop
+#     print("\n----- Draft Reply -----\n")
+#     print(draft)
+#     print("\n-----------------------\n")
+
+#     choice = input("Do you want to (s)end, (e)dit, or (c)ancel? ")
+
+#     if choice.lower() == "e":
+#         print("Enter your edited response (single line, or paste text):")
+#         draft = input("> ")
+
+#     if choice.lower() in ["s", "e"]:
+#         result = send_email(sender, subject, draft)
+#         responses_collection.insert_one({
+#             "email_id": email_id,
+#             "thread_id": email_doc.get("thread_id"),
+#             "to": sender,
+#             "from": recipient,
+#             "subject": subject,
+#             "body": draft,
+#             "status": "sent",
+#             "edited_by_human": choice.lower() == "e",
+#             "created_at": datetime.datetime.utcnow(),
+#             "sent_at": datetime.datetime.utcnow(),
+#             "gmail_response": result
+#         })
+#         print("✅ Email sent and response stored in DB")
+#     else:
+#         print("❌ Action cancelled.")
+
+
+# if __name__ == "__main__":
+#     email_id = input("Enter email ID (_id from DB) to reply: ")
+#     generate_response(email_id)
+
+
 # Responder Agent
-def generate_response(email_id: str):
+def generate_response(email_id: str, human_input: str = None, send_email_flag: bool = True):
+    """
+    Generate and optionally send a response to an email.
+
+    Args:
+        email_id (str): MongoDB ObjectId of the email.
+        human_input (str, optional): Edited draft to merge with AI draft.
+        send_email_flag (bool): If True, send the email. If False, just generate draft.
+    
+    Returns:
+        dict: Contains merged draft, email metadata, and status info.
+    """
     try:
         oid = ObjectId(email_id)
     except Exception:
         raise ValueError("Invalid ObjectId format")
+    
     email_doc: Dict[str, Any] = emails_collection.find_one({"_id": oid})
     if not email_doc:
         raise ValueError("Email not found!")
@@ -111,45 +182,49 @@ def generate_response(email_id: str):
     subject = "Re: " + (email_doc.get("subject") or "No Subject")
     body = email_doc.get("body_plain") or email_doc.get("snippet") or ""
 
-    # Step 1: Generate draft
-    draft = responder_chain.invoke({
+    # Step 1: Generate draft using AI
+    ai_draft = responder_chain.invoke({
         "sender": sender,
         "recipient": recipient,
         "subject": subject,
         "email_body": body
     }).content
 
-    # Step 2: Human-in-the-loop
-    print("\n----- Draft Reply -----\n")
-    print(draft)
-    print("\n-----------------------\n")
+    # Step 2: Merge AI draft with human input if provided
+    if human_input:
+        # Merge: AI draft first, then human edits separated by a line
+        if human_input=="string":
+            human_input=""
+        merged_draft = f"{ai_draft}\n{human_input}"
+    else:
+        merged_draft = ai_draft
 
-    choice = input("Do you want to (s)end, (e)dit, or (c)ancel? ")
-
-    if choice.lower() == "e":
-        print("Enter your edited response (single line, or paste text):")
-        draft = input("> ")
-
-    if choice.lower() in ["s", "e"]:
-        result = send_email(sender, subject, draft)
+    # Step 3: Optionally send email
+    result = None
+    status = "draft_generated"
+    if send_email_flag:
+        result = send_email(sender, subject, merged_draft)
         responses_collection.insert_one({
             "email_id": email_id,
             "thread_id": email_doc.get("thread_id"),
             "to": sender,
             "from": recipient,
             "subject": subject,
-            "body": draft,
+            "body": merged_draft,
             "status": "sent",
-            "edited_by_human": choice.lower() == "e",
+            "edited_by_human": bool(human_input),
             "created_at": datetime.datetime.utcnow(),
             "sent_at": datetime.datetime.utcnow(),
             "gmail_response": result
         })
-        print("✅ Email sent and response stored in DB")
-    else:
-        print("❌ Action cancelled.")
+        status = "sent"
 
-
-if __name__ == "__main__":
-    email_id = input("Enter email ID (_id from DB) to reply: ")
-    generate_response(email_id)
+    return {
+        "email_id": email_id,
+        "to": sender,
+        "from": recipient,
+        "subject": subject,
+        "draft": merged_draft,
+        "status": status,
+        "gmail_response": result
+    }

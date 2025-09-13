@@ -107,9 +107,10 @@ import time
 
 def classify_unclassified_emails(limit: int = 5, delay: int = 6):
     emails = get_unclassified_emails()
+    classified = []
     if not emails:
         print("[INFO] No unclassified emails found ✅")
-        return
+        return []
 
     for i, email in enumerate(emails[:limit]):
         print(f"\n[PROCESSING {i+1}/{limit}] From: {email.get('from')} | Subject: {email.get('subject', '')[:50]}")
@@ -121,9 +122,10 @@ def classify_unclassified_emails(limit: int = 5, delay: int = 6):
             reasoning=classification["reasoning"],
             summary=classification["summary"]
         )
+        classified.append({**email, **classification})
         time.sleep(delay)  # prevent hitting quota
-
     print("\n[FINISHED] Classification batch completed ✅")
+    return classified
 
 # 🔹 Run Script
 if __name__ == "__main__":
