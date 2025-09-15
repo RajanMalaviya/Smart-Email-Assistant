@@ -103,15 +103,24 @@ from typing import Optional
 from bson import ObjectId
 
 from services.gmail_service import GmailService
-from services.db_service import bulk_upsert_emails, get_all_emails
+from services.db_service import bulk_upsert_emails, get_all_emails, get_all_classified_emails
 from services.classifier import classify_unclassified_emails
 from services.responder import generate_response
 from utils.parser import clean_email_text
 from services.logger import get_logger
-
+from fastapi.middleware.cors import CORSMiddleware
 logger = get_logger(__name__)
 
 app = FastAPI(title="Smart Email Assistant API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # your React Vite dev server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # Pydantic models
 class FetchRequest(BaseModel):
@@ -192,16 +201,6 @@ def classify_emails(limit: int = Query(5, description="Number of emails to class
         } for email in classified] if classified else []
     }
 
-
-# Respond to an email
-# @app.post("/respond")
-# def respond_email(request: RespondRequest):
-#     result = generate_response(
-#         email_id=request.email_id,
-#         human_input=request.draft,  # optional
-#         send_email_flag=True
-#     )
-#     return result
 @app.post("/respond")
 def respond_email(request: RespondRequest):
     try:
@@ -221,29 +220,50 @@ def respond_email(request: RespondRequest):
         }
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
+    
+# Endpoint to get all classified emails
+@app.get("/classified-emails")
+def get_classified_emails():
+    classified_emails = get_all_classified_emails()
+    emails_json = []
+    for email in classified_emails:
+        emails_json.append({
+            "id": str(email.get("id")),
+            "from": email.get("from"),
+            "to": email.get("to"),
+            "subject": email.get("subject"),
+            "snippet": clean_email_text(email.get("snippet", "")),
+            "date": email.get("date"),
+            "thread_id": email.get("thread_id"),
+            "category": email.get("category"),
+            "confidence": email.get("confidence"),
+            "reasoning": email.get("reasoning"),
+            "summary": email.get("summary"),
+        })
+    classified_emails = emails_json
+        
+    return {"classified_emails": classified_emails}
 
+# Endpoint for getting all responded emails
 
-@app.post("/all")
-def all_tasks(request: AllTasksRequest):
-    fetch_result = fetch_emails(FetchRequest(max_emails_to_fetch=request.fetch_limit))
-    classify_result = classify_emails(limit=request.fetch_limit)
-
-    response_result = None
-    response_status = "No email ID provided for response"
-    if request.respond_email_id:
-        try:
-            response_result = generate_response(
-                email_id=request.respond_email_id,
-                human_input=request.human_input,
-                send_email_flag=True
-            )
-            response_status = "Response sent"
-        except ValueError as ve:
-            response_status = f"Error: {ve}"
-
-    return {
-        "fetch_result": fetch_result,
-        "classification_result": classify_result,
-        "response_status": response_status,
-        "response_result": response_result
-    }
+@app.get("/responded-emails")
+def get_responded_emails():
+    from services.db_service import get_responded_emails
+    responded_emails = get_responded_emails()
+    emails_json = []
+    for r in responded_emails:
+        emails_json.append({
+            "email_id": r.get("email_id"),
+            "thread_id": r.get("thread_id"),
+            "to": r.get("to"),
+            "from": r.get("from"),
+            "subject": r.get("subject"),
+            "body": r.get("body"),
+            "status": r.get("status"),
+            "edited_by_human": r.get("edited_by_human"),
+            "created_at": r.get("created_at"),
+            "sent_at": r.get("sent_at"),
+            "gmail_response": r.get("gmail_response"),
+        })
+    responded_emails = emails_json
+    return {"responded_emails": responded_emails}

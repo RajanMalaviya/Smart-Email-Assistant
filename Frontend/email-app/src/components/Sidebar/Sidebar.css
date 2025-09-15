@@ -1,0 +1,109 @@
+/* Sidebar.css */
+.sidebar {
+  width: 220px;
+  background: #23284a;
+  color: #fff;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 16px rgba(44,62,80,0.08);
+  min-width: 60px;
+  transition: width 0.2s;
+}
+
+.sidebar-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  letter-spacing: 1px;
+  border-bottom: 1px solid #4fd1c5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #4fd1c5;
+  text-shadow: 0 2px 8px rgba(44,62,80,0.10);
+}
+@media (max-width: 900px) {
+  .sidebar {
+    flex-direction: row;
+    width: 100%;
+    height: auto;
+    min-width: 0;
+    box-shadow: none;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 0.5rem 0;
+  }
+  .sidebar-title {
+    padding: 1rem 1rem 1rem 1rem;
+    font-size: 1.1rem;
+  }
+  .sidebar nav {
+    flex-direction: row;
+    gap: 1rem;
+    margin-top: 0;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .sidebar-item {
+    border-radius: 2rem;
+    padding: 0.7rem 1rem;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.9rem 1.5rem;
+    cursor: pointer;
+    border-radius: 0 2rem 2rem 0;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    font-size: 1.1rem;
+    position: relative;
+    color: #e0e7ef;
+  }
+  .sidebar-item:hover,
+  .sidebar-item.selected {
+    background: linear-gradient(90deg, #4fd1c5 0%, #23284a 100%);
+    color: #23284a;
+    box-shadow: 0 2px 12px rgba(44,62,80,0.10);
+  }
+  /* removed orphaned properties */
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1.5rem;
+  cursor: pointer;
+  border-radius: 0 2rem 2rem 0;
+  transition: background 0.2s, color 0.2s;
+  font-size: 1.1rem;
+  position: relative;
+}
+
+.sidebar-item:hover,
+.sidebar-item.selected {
+  background: #23284a;
+  color: #4fd1c5;
+}
+
+.sidebar-icon {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  color: #4fd1c5;
+  transition: color 0.2s;
+}
+.sidebar-item.selected .sidebar-icon,
+.sidebar-item:hover .sidebar-icon {
+  color: #23284a;
+}
+
+.sidebar-label {
+  flex: 1;
+}

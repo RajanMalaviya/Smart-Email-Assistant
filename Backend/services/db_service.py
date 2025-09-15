@@ -189,4 +189,54 @@ def update_email_classification(provider_message_id: str, category: str, confide
     )
     print(f"Updated email {provider_message_id} with category '{category}' and confidence {confidence}")
 
+# Get all classified emails
+from typing import List, Dict, Any
+from bson import ObjectId
+
+def get_all_classified_emails() -> List[Dict[str, Any]]:
+    query = {"classifications.category": {"$exists": True, "$ne": None}}
     
+    emails = list(emails_collection.find(query))
+    result = []
+
+    for e in emails:
+        result.append({
+            "id": str(e.get("_id")),
+            "from": e.get("from"),
+            "to": e.get("to", []),
+            "subject": e.get("subject"),
+            "snippet": e.get("snippet"),
+            "date": e.get("date"),
+            "thread_id": e.get("thread_id"),
+            "category": e.get("classifications", {}).get("category"),
+            "confidence": e.get("classifications", {}).get("confidence"),
+            "reasoning": e.get("classifications", {}).get("reasoning"),
+            "summary": e.get("classifications", {}).get("summary"),
+        })
+
+    print(f"Retrieved {len(result)} classified emails from MongoDB")
+    return result
+
+# function to get responed emails from "responses" collection
+def get_responded_emails() -> List[Dict[str, Any]]:
+    responses_collection = db["responses"]
+    responses = list(responses_collection.find({}, {"_id": 0}))
+    print(f"Retrieved {len(responses)} responded emails from MongoDB")
+    # Fetch responses and map fields to match the inserted structure
+    result = []
+    for r in responses:
+        result.append({
+            "email_id": r.get("email_id"),
+            "thread_id": r.get("thread_id"),
+            "to": r.get("to"),
+            "from": r.get("from"),
+            "subject": r.get("subject"),
+            "body": r.get("body"),
+            "status": r.get("status"),
+            "edited_by_human": r.get("edited_by_human"),
+            "created_at": r.get("created_at"),
+            "sent_at": r.get("sent_at"),
+            "gmail_response": r.get("gmail_response"),
+        })
+    return result
+

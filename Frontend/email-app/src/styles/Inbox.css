@@ -1,0 +1,69 @@
+.inbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  background: linear-gradient(120deg, #f8fafc 0%, #e0e7ef 100%);
+  border-radius: 12px;
+  padding: 1.2rem 0.5rem;
+}
+.email-card {
+  background: linear-gradient(100deg, #fff 80%, #e0e7ef 100%);
+  border-radius: 14px;
+  box-shadow: 0 4px 18px rgba(44,62,80,0.08);
+  padding: 1.3rem 2rem;
+  transition: box-shadow 0.2s, transform 0.2s;
+  cursor: pointer;
+  border: 1.5px solid #e0e7ef;
+}
+.email-card:hover {
+  box-shadow: 0 8px 32px rgba(44,62,80,0.13);
+  background: #f7fafc;
+  transform: translateY(-2px) scale(1.01);
+}
+.email-from {
+  font-weight: 700;
+  color: #23284a;
+  letter-spacing: 0.2px;
+}
+.email-subject {
+  font-size: 1.13rem;
+  margin: 0.2rem 0;
+  color: #4fd1c5;
+  font-weight: 700;
+}
+.email-snippet {
+  color: #555;
+  margin-bottom: 0.3rem;
+  font-size: 0.99rem;
+}
+.email-date {
+  font-size: 0.93rem;
+  color: #38b2ac;
+  text-align: right;
+  font-weight: 500;
+}
+.loader, .error {
+  text-align: center;
+  margin-top: 2rem;
+  color: #38b2ac;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.refresh-btn {
+  background: linear-gradient(90deg, #4fd1c5 60%, #38b2ac 100%);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+  box-shadow: 0 2px 8px rgba(44,62,80,0.07);
+}
+.refresh-btn:hover {
+  background: linear-gradient(90deg, #38b2ac 60%, #4fd1c5 100%);
+  box-shadow: 0 4px 16px rgba(44,62,80,0.13);
+  transform: translateY(-1px) scale(1.04);
+}

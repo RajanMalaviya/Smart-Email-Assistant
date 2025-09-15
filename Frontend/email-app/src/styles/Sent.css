@@ -1,0 +1,74 @@
+.sent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  background: linear-gradient(120deg, #f8fafc 0%, #e0e7ef 100%);
+  border-radius: 12px;
+  padding: 1.2rem 0.5rem;
+}
+.sent-card {
+  background: linear-gradient(100deg, #fff 80%, #e0e7ef 100%);
+  border-radius: 14px;
+  box-shadow: 0 4px 18px rgba(44,62,80,0.08);
+  padding: 1.5rem 2rem;
+  transition: box-shadow 0.2s, transform 0.2s;
+  border: 1.5px solid #e0e7ef;
+}
+.sent-card:hover {
+  box-shadow: 0 8px 32px rgba(44,62,80,0.13);
+  transform: translateY(-2px) scale(1.01);
+}
+.sent-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.3rem;
+  border-bottom: 1px solid #e0e7ef;
+  padding-bottom: 0.3rem;
+}
+.sent-to {
+  font-weight: 700;
+  color: #23284a;
+  letter-spacing: 0.2px;
+}
+.sent-status {
+  background: linear-gradient(90deg, #4fd1c5 60%, #38b2ac 100%);
+  color: #fff;
+  border-radius: 4px;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.97rem;
+  margin-left: auto;
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(44,62,80,0.10);
+}
+.sent-edited {
+  color: #e67e22;
+  font-size: 0.97rem;
+  margin-left: 1rem;
+  font-weight: 500;
+}
+.sent-subject {
+  font-size: 1.13rem;
+  color: #4fd1c5;
+  margin-bottom: 0.2rem;
+  font-weight: 700;
+}
+.sent-body {
+  color: #555;
+  margin-bottom: 0.3rem;
+  white-space: pre-line;
+  font-size: 0.99rem;
+}
+.sent-date {
+  font-size: 0.93rem;
+  color: #38b2ac;
+  text-align: right;
+  font-weight: 500;
+}
+.loader, .error {
+  text-align: center;
+  margin-top: 2rem;
+  color: #38b2ac;
+  font-weight: 600;
+  font-size: 1.1rem;
+}

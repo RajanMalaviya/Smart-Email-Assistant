@@ -8,7 +8,7 @@ from services.logger import get_logger
 logger = get_logger(__name__)
 
 # Gmail API Scopes
-SCOPES = ["https://www.googleapis.com/auth/gmail.readonly", "https://www.googleapis.com/auth/gmail.send"]
+SCOPES = ["https://www.googleapis.com/auth/gmail.readonly", "https://www.googleapis.com/auth/gmail.send", "https://www.googleapis.com/auth/gmail.modify"]
 
 class GmailService:
     def __init__(self):

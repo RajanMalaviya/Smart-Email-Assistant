@@ -1,0 +1,47 @@
+/* Tooltip.css */
+.custom-tooltip-wrapper:focus {
+  outline: none;
+}
+
+.custom-tooltip {
+  position: absolute;
+  z-index: 1000;
+  background: #23284a;
+  color: #fff;
+  padding: 0.5em 1em;
+  border-radius: 6px;
+  font-size: 0.95em;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  opacity: 0.95;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+
+.custom-tooltip-top {
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 0.5em;
+}
+
+.custom-tooltip-bottom {
+  top: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 0.5em;
+}
+
+.custom-tooltip-left {
+  right: 120%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-right: 0.5em;
+}
+
+.custom-tooltip-right {
+  left: 120%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 0.5em;
+}

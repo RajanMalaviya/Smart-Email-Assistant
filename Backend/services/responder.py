@@ -96,65 +96,6 @@ responder_chain = (
     | llm
 )
 
-# # Responder Agent
-# def generate_response(email_id: str):
-#     try:
-#         oid = ObjectId(email_id)
-#     except Exception:
-#         raise ValueError("Invalid ObjectId format")
-#     email_doc: Dict[str, Any] = emails_collection.find_one({"_id": oid})
-#     if not email_doc:
-#         raise ValueError("Email not found!")
-
-#     sender = email_doc.get("from", "")
-#     recipient = email_doc.get("to", [])[0] if email_doc.get("to") else "unknown@example.com"
-#     subject = "Re: " + (email_doc.get("subject") or "No Subject")
-#     body = email_doc.get("body_plain") or email_doc.get("snippet") or ""
-
-#     # Step 1: Generate draft
-#     draft = responder_chain.invoke({
-#         "sender": sender,
-#         "recipient": recipient,
-#         "subject": subject,
-#         "email_body": body
-#     }).content
-
-#     # Step 2: Human-in-the-loop
-#     print("\n----- Draft Reply -----\n")
-#     print(draft)
-#     print("\n-----------------------\n")
-
-#     choice = input("Do you want to (s)end, (e)dit, or (c)ancel? ")
-
-#     if choice.lower() == "e":
-#         print("Enter your edited response (single line, or paste text):")
-#         draft = input("> ")
-
-#     if choice.lower() in ["s", "e"]:
-#         result = send_email(sender, subject, draft)
-#         responses_collection.insert_one({
-#             "email_id": email_id,
-#             "thread_id": email_doc.get("thread_id"),
-#             "to": sender,
-#             "from": recipient,
-#             "subject": subject,
-#             "body": draft,
-#             "status": "sent",
-#             "edited_by_human": choice.lower() == "e",
-#             "created_at": datetime.datetime.utcnow(),
-#             "sent_at": datetime.datetime.utcnow(),
-#             "gmail_response": result
-#         })
-#         print("✅ Email sent and response stored in DB")
-#     else:
-#         print("❌ Action cancelled.")
-
-
-# if __name__ == "__main__":
-#     email_id = input("Enter email ID (_id from DB) to reply: ")
-#     generate_response(email_id)
-
-
 # Responder Agent
 def generate_response(email_id: str, human_input: str = None, send_email_flag: bool = True):
     """
